@@ -39,12 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (!data) {
       // Auto-create profile on first login
+      const { data: { user: sessionUser } } = await supabase.auth.getUser();
       const { data: created, error: createErr } = await supabase
         .from('profiles')
         .insert({
           id: uid,
-          email: (await supabase.auth.getUser()).data.user?.email ?? '',
-          full_name: '',
+          email: sessionUser?.email ?? '',
+          full_name: sessionUser?.user_metadata?.full_name ?? '',
+          recovery_phone: sessionUser?.user_metadata?.recovery_phone ?? null,
+          country: sessionUser?.user_metadata?.country ?? null,
           profile_completion: 10,
         })
         .select('*')
@@ -121,9 +124,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, recoveryPhone: string, country: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName, recovery_phone: recoveryPhone, country } },
+    });
     if (error) return { error: error.message };
-    if (data.user) {
+    if (data.user && data.session) {
       const { error: profileErr } = await supabase.from('profiles').insert({
         id: data.user.id,
         email,

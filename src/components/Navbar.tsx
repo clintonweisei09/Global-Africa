@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency, eastAfricanCountries } from '../context/CurrencyContext';
 
-const navLinks: { label: string; href: string; icon?: any }[] = [
+const navLinks: { label: string; href: string }[] = [
   { label: 'Jobs', href: '/jobs' },
   { label: 'AI Assistant', href: '/assistant' },
   { label: 'Messages', href: '/messages' },
@@ -151,7 +151,7 @@ export default function Navbar() {
               <button onClick={toggleTheme} className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">
                 {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
-              <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5">
+              <button onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={mobileOpen} className="p-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5">
                 {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
@@ -165,7 +165,7 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 lg:top-20 left-0 right-0 z-40 lg:hidden glass dark:glass-dark border-t border-slate-200/50 dark:border-white/10"
+            className="fixed top-16 lg:top-20 left-0 right-0 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto lg:hidden glass dark:glass-dark border-t border-slate-200/50 dark:border-white/10"
           >
             <div className="px-4 py-4 space-y-1">
               {navLinks.map((link) => (

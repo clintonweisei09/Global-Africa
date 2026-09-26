@@ -12,7 +12,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [recoveryPhone, setRecoveryPhone] = useState('');
-  const [country, setCountry] = useState('UG');
+  const [country, setCountry] = useState('KE');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function Register() {
     setError('');
 
     const normalizedPhone = normalizePhoneInput(recoveryPhone);
-    if (!/^\d{10}$/.test(normalizedPhone)) {
+    if (normalizedPhone && !/^\d{10}$/.test(normalizedPhone)) {
       setError('Phone number must be 10 digits without the country code.');
       return;
     }
@@ -38,7 +38,7 @@ export default function Register() {
       setError(error);
       return;
     }
-    setStep('2fa-setup');
+    setStep('success');
   };
 
   const handle2FASetup = (method: 'fingerprint' | 'phone') => {
@@ -90,7 +90,7 @@ export default function Register() {
                     </button>
                   </div>
                 </div>
-                <InputField icon={Phone} label="Recovery Phone" type="tel" value={recoveryPhone} onChange={(value) => setRecoveryPhone(normalizePhoneInput(value))} placeholder="700000000" />
+                <InputField icon={Phone} label="Recovery Phone (optional)" type="tel" value={recoveryPhone} onChange={(value) => setRecoveryPhone(normalizePhoneInput(value))} placeholder="700000000" required={false} />
                 <div>
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5 block">Country (determines your currency)</label>
                   <div className="relative">
@@ -202,7 +202,7 @@ export default function Register() {
               </div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Account Created!</h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                {twoFactorChoice ? `2FA enabled via ${twoFactorChoice}. ` : ''}Welcome to GlobalHire Africa.
+                {twoFactorChoice ? `2FA enabled via ${twoFactorChoice}. ` : ''}Welcome to GlobalHire Africa. If email confirmation is enabled, confirm your address before signing in.
               </p>
               <button
                 onClick={() => navigate('/login')}
@@ -225,6 +225,7 @@ function InputField({
   onChange,
   placeholder,
   type = 'text',
+  required = true,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -232,6 +233,7 @@ function InputField({
   onChange: (v: string) => void;
   placeholder: string;
   type?: string;
+  required?: boolean;
 }) {
   return (
     <div>
@@ -240,7 +242,7 @@ function InputField({
         <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
         <input
           type={type}
-          required
+          required={required}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}

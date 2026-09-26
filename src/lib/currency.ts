@@ -55,6 +55,11 @@ export function getCountryByCode(code: string): CurrencyCountry {
   return eastAfricanCountries.find((c) => c.code === code) || defaultCountry;
 }
 
+export function getCountryByName(name: string): CurrencyCountry | undefined {
+  const normalizedName = name.trim().toLowerCase();
+  return eastAfricanCountries.find((c) => c.name.toLowerCase() === normalizedName || c.code.toLowerCase() === normalizedName);
+}
+
 export function convertFromUSD(usdAmount: number, currency: string): { amount: number; symbol: string; formatted: string } {
   const country = eastAfricanCountries.find((c) => c.currency === currency);
   if (!country) return { amount: usdAmount, symbol: '$', formatted: `$${usdAmount.toLocaleString()}` };

@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, Plane, Home, Clock, MapPin, BadgeCheck, Book
 import { supabase } from '../lib/supabase';
 import type { Job } from '../lib/supabase';
 import { kenyaJobs } from '../data/kenyaJobs';
+import { fallbackJobs } from '../components/FeaturedJobs';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../context/CurrencyContext';
 
@@ -42,10 +43,9 @@ export default function JobListings() {
 
   useEffect(() => {
     supabase.from('jobs').select('country').order('country').then(({ data }) => {
-      if (data) {
-        const unique = Array.from(new Set(data.map((d) => d.country)));
-        setCountryList(unique);
-      }
+      const localCountries = [...fallbackJobs, ...kenyaJobs].map((job) => job.country);
+      const unique = Array.from(new Set([...(data || []).map((d) => d.country), ...localCountries])).filter(Boolean).sort();
+      setCountryList(unique);
     });
   }, []);
 
@@ -58,50 +58,54 @@ export default function JobListings() {
   useEffect(() => { fetchSaved(); }, [fetchSaved]);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    let query = supabase.from('jobs').select('*', { count: 'exact' }).eq('status', 'active');
+    supabase.from('jobs').select('*').eq('status', 'active').then(({ data }) => {
+      if (cancelled) return;
+      const seen = new Set<string>();
+      const allJobs = [...((data as Job[] | null) || []), ...fallbackJobs, ...kenyaJobs].filter((job) => {
+        const key = `${job.country}|${job.company}|${job.title}`.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      const searchTerm = search.trim().toLowerCase();
+      const selectedCategoryTerms: Record<string, string[]> = {
+        Housekeepers: ['housekeep', 'housemaid'],
+        Maids: ['maid', 'housekeep'],
+        Cleaners: ['clean'],
+        Gardeners: ['garden'],
+        Drivers: ['driver', 'transport'],
+        'Hotel Staff': ['hotel', 'hospitality'],
+        'Factory Workers': ['factory', 'manufactur'],
+        'Petrol Attendants': ['petrol', 'fuel'],
+        Caregivers: ['caregiver', 'healthcare'],
+        Construction: ['construction'],
+        'Security Guards': ['security'],
+        'Chefs & Cooks': ['chef', 'cook'],
+      };
+      const filteredJobs = allJobs.filter((job) => {
+        const searchableText = [job.title, job.company, job.city, job.country, ...(job.tags || [])].join(' ').toLowerCase();
+        const categoryText = [job.title, job.category, ...(job.tags || [])].join(' ').toLowerCase();
+        const matchesSearch = !searchTerm || searchableText.includes(searchTerm);
+        const matchesCountry = country === 'All' || job.country.toLowerCase() === country.toLowerCase();
+        const matchesCategory = category === 'All' || (selectedCategoryTerms[category] || [category.toLowerCase()]).some((term) => categoryText.includes(term.toLowerCase()));
+        const matchesType = jobType === 'All' || (job.type || job.contract || '').toLowerCase() === jobType.toLowerCase();
+        const matchesVisa = !visaOnly || job.visa;
+        const matchesSalary = !minSalary || (job.salary_min ?? 0) >= Number.parseInt(minSalary, 10);
+        return matchesSearch && matchesCountry && matchesCategory && matchesType && matchesVisa && matchesSalary;
+      });
 
-    if (search) {
-      query = query.or(`title.ilike.%${search}%,company.ilike.%${search}%,city.ilike.%${search}%,tags.cs.{${search}}`);
-    }
-    if (country !== 'All') query = query.eq('country', country);
-    if (category !== 'All') query = query.eq('category', category);
-    if (jobType !== 'All') query = query.eq('type', jobType);
-    if (visaOnly) query = query.eq('visa', true);
-    if (minSalary) query = query.gte('salary_min', parseInt(minSalary));
+      if (sortBy === 'salary_high') filteredJobs.sort((a, b) => (b.salary_min ?? 0) - (a.salary_min ?? 0));
+      else if (sortBy === 'salary_low') filteredJobs.sort((a, b) => (a.salary_min ?? 0) - (b.salary_min ?? 0));
+      else if (sortBy === 'country') filteredJobs.sort((a, b) => a.country.localeCompare(b.country));
+      else filteredJobs.sort((a, b) => b.created_at.localeCompare(a.created_at));
 
-    if (sortBy === 'newest') query = query.order('created_at', { ascending: false });
-    else if (sortBy === 'salary_high') query = query.order('salary_min', { ascending: false });
-    else if (sortBy === 'salary_low') query = query.order('salary_min', { ascending: true });
-    else if (sortBy === 'country') query = query.order('country', { ascending: true });
-
-    query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
-
-    query.then(({ data, count }) => {
-      let nextJobs = (data as Job[] | null) || [];
-
-      if (country === 'Kenya') {
-        const kenyaMatches = kenyaJobs.filter((job) => {
-          const matchesSearch = !search || [job.title, job.company, job.city, ...(job.tags || [])].join(' ').toLowerCase().includes(search.toLowerCase());
-          const matchesCategory = category === 'All' || job.category === category;
-          const matchesType = jobType === 'All' || job.type.toLowerCase() === jobType.toLowerCase();
-          const matchesVisa = !visaOnly || job.visa;
-          const matchesSalary = !minSalary || (job.salary_min ?? 0) >= parseInt(minSalary, 10);
-          return matchesSearch && matchesCategory && matchesType && matchesVisa && matchesSalary;
-        });
-
-        const merged = [...nextJobs, ...kenyaMatches].filter((job, index, arr) => arr.findIndex((candidate) => candidate.id === job.id) === index);
-        const paged = merged.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
-        setJobs(paged);
-        setTotal(merged.length);
-        setLoading(false);
-        return;
-      }
-
-      setJobs(nextJobs);
-      setTotal(count ?? 0);
+      setTotal(filteredJobs.length);
+      setJobs(filteredJobs.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE));
       setLoading(false);
     });
+    return () => { cancelled = true; };
   }, [search, country, category, jobType, visaOnly, minSalary, sortBy, page]);
 
   const toggleSave = async (jobId: string) => {
@@ -291,7 +295,7 @@ export default function JobListings() {
               <button
                 key={i}
                 onClick={() => setPage(i)}
-                className={`w-10 h-10 rounded-lg font-semibold text-sm transition-colors ${
+                className={`w-10 h-10 rounded-lg font-semibold text-sm transition-colors ${page === i ? '' : 'hidden sm:inline-flex'} ${
                   page === i
                     ? 'bg-brand-600 text-white'
                     : 'bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'

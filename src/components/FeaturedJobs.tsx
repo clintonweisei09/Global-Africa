@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import type { Job } from '../lib/supabase';
 import { useCurrency } from '../context/CurrencyContext';
 
-const fallbackJobs: Job[] = [
+export const fallbackJobs: Job[] = [
   { id: 'fallback-1', title: 'Housekeeping Supervisor', employer_id: null, company: 'Royal Emirates Hospitality', logo: '', country: 'United Arab Emirates', flag: '🇦🇪', city: 'Dubai', salary: 'AED 3,200/mo', salary_min: 3200, salary_max: 4200, agent_name: null, agent_avatar: null, agent_personality: null, type: 'full-time', category: 'Hospitality', visa: true, accommodation: true, meals: true, insurance: true, contract: 'Permanent', working_hours: '8 hours/day', responsibilities: ['Linen management', 'Guest room checks'], requirements: ['Experience in housekeeping'], benefits: ['Visa support'], description: 'Lead cleaning and guest support for resort operations.', tags: ['Housekeeping', 'Supervisor', 'Resort'], posted: '2 days ago', status: 'active', created_at: new Date().toISOString() },
   { id: 'fallback-2', title: 'Caregiver', employer_id: null, company: 'BrightCare Senior Services', logo: '', country: 'Canada', flag: '🇨🇦', city: 'Toronto', salary: '$2,800/mo', salary_min: 2800, salary_max: 3600, agent_name: null, agent_avatar: null, agent_personality: null, type: 'full-time', category: 'Healthcare', visa: true, accommodation: true, meals: false, insurance: true, contract: 'Permanent', working_hours: '8 hours/day', responsibilities: ['Patient care'], requirements: ['Caregiving background'], benefits: ['Healthcare'], description: 'Support seniors in assisted living homes.', tags: ['Caregiver', 'Healthcare', 'Canada'], posted: '3 days ago', status: 'active', created_at: new Date().toISOString() },
   { id: 'fallback-3', title: 'Warehouse Picker', employer_id: null, company: 'Riyadh Transport Co.', logo: '', country: 'Saudi Arabia', flag: '🇸🇦', city: 'Riyadh', salary: 'SAR 2,600/mo', salary_min: 2600, salary_max: 3300, agent_name: null, agent_avatar: null, agent_personality: null, type: 'full-time', category: 'Logistics', visa: true, accommodation: true, meals: true, insurance: true, contract: 'Permanent', working_hours: '9 hours/day', responsibilities: ['Order picking'], requirements: ['Forklift certificate'], benefits: ['Transport allowance'], description: 'Support warehouse operations and inventory management.', tags: ['Warehouse', 'Logistics', 'Packing'], posted: '1 week ago', status: 'active', created_at: new Date().toISOString() },
@@ -130,7 +130,7 @@ export default function FeaturedJobs() {
 
               <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                  <span className="text-base font-bold text-slate-900 dark:text-white">{formatJobSalary(Number.parseInt((job.salary || '').replace(/[^0-9]/g, '')) || 0, job.country)}</span>
+                  <span className="text-base font-bold text-slate-900 dark:text-white">{formatJobSalary(job.salary_min ?? (Number.parseInt((job.salary || '').replace(/[^0-9]/g, '')) || 0), job.country, 66000)}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <Clock className="w-4 h-4" /> {job.contract}

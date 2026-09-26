@@ -91,7 +91,7 @@ function HomePage() {
                     ))}
                   </div>
 
-                  <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">{job.salary}</div>
+                  <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">KES {Math.min(job.salary_min, 66000).toLocaleString()}/mo</div>
 
                   <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
                     <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">

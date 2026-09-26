@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { eastAfricanCountries, defaultCountry, getCountryByCode, CurrencyCountry } from '../lib/currency';
+import { eastAfricanCountries, defaultCountry, getCountryByCode, getCountryByName, CurrencyCountry } from '../lib/currency';
 import { useAuth } from './AuthContext';
 
 interface CurrencyContextType {
@@ -7,7 +7,7 @@ interface CurrencyContextType {
   setCountry: (code: string) => void;
   formatPrice: (usd: number) => string;
   formatPriceWithUSD: (usd: number) => string;
-  formatJobSalary: (amount: number | null | undefined, jobCountry?: string) => string;
+  formatJobSalary: (amount: number | null | undefined, jobCountry?: string, maxDisplayAmount?: number) => string;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -44,16 +44,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return `${country.currencySymbol} ${converted.toLocaleString()} ($${usd.toLocaleString()})`;
   };
 
-  const formatJobSalary = (amount: number | null | undefined, jobCountry?: string): string => {
+  const formatJobSalary = (amount: number | null | undefined, jobCountry?: string, maxDisplayAmount?: number): string => {
     const numeric = Number(amount ?? 0);
-    if (!Number.isFinite(numeric) || numeric <= 0) return 'KES 0/mo';
-
-    const normalizedCountry = (jobCountry || '').toLowerCase();
-    if (normalizedCountry === 'kenya' || normalizedCountry === 'ke') {
-      return `KES ${numeric.toLocaleString()}/mo`;
-    }
-
-    return formatPrice(numeric);
+    if (!Number.isFinite(numeric) || numeric <= 0) return `${country.currencySymbol} 0/mo`;
+    const sourceCountry = getCountryByName(jobCountry || '');
+    const amountInUSD = sourceCountry ? numeric / sourceCountry.rateFromUSD : numeric;
+    const convertedAmount = Math.round(amountInUSD * country.rateFromUSD);
+    const converted = maxDisplayAmount ? Math.min(convertedAmount, maxDisplayAmount) : convertedAmount;
+    return `${country.currencySymbol} ${converted.toLocaleString()}/mo`;
   };
 
   return (

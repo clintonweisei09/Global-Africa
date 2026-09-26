@@ -27,7 +27,7 @@ export default function Login() {
       setError(error);
       return;
     }
-    setStep('2fa');
+    navigate('/dashboard');
   };
 
   const handleFingerprint = () => {

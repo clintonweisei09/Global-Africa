@@ -8,13 +8,14 @@ import {
 import { supabase } from '../lib/supabase';
 import type { Job, Employer } from '../lib/supabase';
 import { kenyaJobs } from '../data/kenyaJobs';
+import { fallbackJobs } from '../components/FeaturedJobs';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../context/CurrencyContext';
 import JobAgentChat from '../components/JobAgentChat';
 
 const getJobById = (id?: string) => {
   if (!id) return null;
-  return kenyaJobs.find((job) => job.id === id) ?? null;
+  return [...kenyaJobs, ...fallbackJobs].find((job) => job.id === id) ?? null;
 };
 
 export default function JobDetails() {

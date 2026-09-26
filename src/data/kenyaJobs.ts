@@ -556,7 +556,7 @@ export const kenyaJobs: Job[] = [
     city: 'Kiambu',
     salary: 'KES 50,000/mo',
     salary_min: 50000,
-    salary_max: 76000,
+    salary_max: 66000,
     agent_name: null,
     agent_avatar: null,
     agent_personality: null,
